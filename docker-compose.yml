@@ -1,5 +1,7 @@
-# `db`/`db-init` stand in for RDS during local/EC2 dev -- production points
-# DATABASE_URL at real RDS instead. `app` hardening: read-only rootfs (tmpfs
+# `db`/`db-init` (profile `local-db`) stand in for RDS during local dev.
+# Production / EC2 with RDS: set DATABASE_URL in `.env` and run
+# `docker compose up` (app only). Local bundled SQL Server:
+# `docker compose --profile local-db up`. `app` hardening: read-only rootfs (tmpfs
 # for upload spooling), all capabilities dropped, non-root UID. `db` needs
 # NET_BIND_SERVICE added back despite not binding a privileged port: the
 # sqlservr binary has cap_net_bind_service as a *file* capability, which the
@@ -23,12 +25,14 @@ services:
       S3_BUCKET_ARCHIVES: ${S3_BUCKET_ARCHIVES}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      DATABASE_URL: mssql+pymssql://sa:${MSSQL_SA_PASSWORD}@db:1433/${MSSQL_DB:-filebackup}
+      DATABASE_URL: ${DATABASE_URL:-mssql+pymssql://sa:${MSSQL_SA_PASSWORD}@db:1433/${MSSQL_DB:-filebackup}}
     depends_on:
       db:
         condition: service_healthy
+        required: false
       db-init:
         condition: service_completed_successfully
+        required: false
     user: "65532:65532"
     read_only: true
     tmpfs:
@@ -49,6 +53,7 @@ services:
       retries: 3
 
   db:
+    profiles: ["local-db"]
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
@@ -73,6 +78,7 @@ services:
     # the compose-internal network, same posture as RDS being VPC-private.
 
   db-init:
+    profiles: ["local-db"]
     image: mcr.microsoft.com/mssql/server:2022-latest
     depends_on:
       db:
