@@ -1,0 +1,821 @@
+\documentclass[10pt]{article}
+
+% ---------------------------------------------------------------------
+% PACKAGES
+% ---------------------------------------------------------------------
+\usepackage{fontspec}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{colortbl}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{tcolorbox}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{needspace}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, shapes.symbols}
+\tcbuselibrary{skins,breakable}
+
+% ---------------------------------------------------------------------
+% PAGE GEOMETRY -- 0.5in margins all sides, header/footer INSIDE that
+% margin (includeheadfoot), so top=0.5in is genuinely blank before the
+% running header starts, not eaten by it.
+% ---------------------------------------------------------------------
+\geometry{letterpaper, left=0.5in, right=0.5in, top=0.5in, bottom=0.5in,
+  headheight=20pt, headsep=8pt, footskip=0.28in, includeheadfoot}
+
+% ---------------------------------------------------------------------
+% COLOR PALETTE -- warm, low-glare "paper" theme for eye comfort
+% ---------------------------------------------------------------------
+\definecolor{bgPage}{HTML}{FAF7F0}
+\definecolor{fgText}{HTML}{2B2A26}
+\definecolor{headColor}{HTML}{1E3A4C}
+\definecolor{accentGold}{HTML}{A9813F}
+\definecolor{accentTeal}{HTML}{2C6E7F}
+\definecolor{codeBg}{HTML}{F1ECDF}
+\definecolor{codeBorder}{HTML}{DAD2B8}
+\definecolor{kwColor}{HTML}{4B5F82}
+\definecolor{strColor}{HTML}{5C7A5E}
+\definecolor{commentColor}{HTML}{8C8677}
+\definecolor{numColor}{HTML}{A99A6B}
+\definecolor{tableHead}{HTML}{E8E1CB}
+\definecolor{tableAlt}{HTML}{F3EFE2}
+\definecolor{warnBg}{HTML}{F3E7D4}
+\definecolor{warnBorder}{HTML}{C79A4B}
+\definecolor{tipBg}{HTML}{E4EEE6}
+\definecolor{tipBorder}{HTML}{6F9A7B}
+
+\pagecolor{bgPage}
+\color{fgText}
+
+% ---------------------------------------------------------------------
+% FONTS -- Inter for text/headings, DejaVu Sans Mono for code
+% ---------------------------------------------------------------------
+\setmainfont{Inter}
+\newfontfamily\headingfont{Inter SemiBold}
+\newfontfamily\lightfont{Inter Light}
+\newfontfamily\codefont{DejaVu Sans Mono}
+\linespread{1.15}
+
+\titleformat{\section}{\headingfont\Large\color{headColor}}{\thesection}{0.5em}{}
+\titleformat{\subsection}{\headingfont\large\color{headColor}}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\headingfont\normalsize\color{accentTeal}}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{0.9em}{0.45em}
+\titlespacing*{\subsection}{0pt}{0.7em}{0.3em}
+\titlespacing*{\subsubsection}{0pt}{0.55em}{0.25em}
+
+% ---------------------------------------------------------------------
+% HEADER / FOOTER
+% ---------------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{codeBorder}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{codeBorder}\leaders\hrule height \footrulewidth\hfill}}
+\fancyhead[L]{\footnotesize\color{commentColor} File Backup Service POC}
+\fancyhead[R]{\footnotesize\color{commentColor} \leftmark}
+\fancyfoot[C]{\small\color{commentColor} \thepage}
+
+% ---------------------------------------------------------------------
+% HYPERLINKS
+% ---------------------------------------------------------------------
+\hypersetup{
+  colorlinks=true,
+  linkcolor=accentTeal,
+  citecolor=accentTeal,
+  urlcolor=accentTeal,
+  pdftitle={File Backup Service -- AWS Region Migration POC},
+  pdfauthor={Firoz Mahmud},
+}
+
+% ---------------------------------------------------------------------
+% CODE LISTINGS
+% ---------------------------------------------------------------------
+\newcommand{\lstfontsize}{\fontsize{6.3}{7.1}\selectfont}
+\lstdefinestyle{pyStyle}{
+  basicstyle=\codefont\lstfontsize\color{fgText},
+  keywordstyle=\color{kwColor}\bfseries,
+  stringstyle=\color{strColor},
+  commentstyle=\color{commentColor}\itshape,
+  numberstyle=\tiny\color{numColor},
+  backgroundcolor=\color{codeBg},
+  frame=single,
+  rulecolor=\color{codeBorder},
+  framesep=3pt,
+  numbers=left,
+  numbersep=5pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  showstringspaces=false,
+  tabsize=4,
+  language=Python,
+  captionpos=b,
+  xleftmargin=1em,
+  xrightmargin=0.1em,
+  aboveskip=2pt,
+  belowskip=1pt,
+}
+
+\lstdefinestyle{bashStyle}{
+  basicstyle=\codefont\lstfontsize\color{fgText},
+  keywordstyle=\color{kwColor}\bfseries,
+  stringstyle=\color{strColor},
+  commentstyle=\color{commentColor}\itshape,
+  numberstyle=\tiny\color{numColor},
+  backgroundcolor=\color{codeBg},
+  frame=single,
+  rulecolor=\color{codeBorder},
+  framesep=3pt,
+  numbers=left,
+  numbersep=5pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  showstringspaces=false,
+  tabsize=2,
+  language=bash,
+  captionpos=b,
+  xleftmargin=1em,
+  xrightmargin=0.1em,
+  aboveskip=2pt,
+  belowskip=1pt,
+}
+
+\lstdefinestyle{plainStyle}{
+  basicstyle=\codefont\lstfontsize\color{fgText},
+  backgroundcolor=\color{codeBg},
+  frame=single,
+  rulecolor=\color{codeBorder},
+  framesep=3pt,
+  numbers=left,
+  numbersep=5pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b,
+  xleftmargin=1em,
+  xrightmargin=0.1em,
+  aboveskip=2pt,
+  belowskip=1pt,
+}
+
+\DeclareCaptionFont{tealcolor}{\color{accentTeal}}
+\DeclareCaptionFont{graycolor}{\color{fgText}}
+\DeclareCaptionFont{capheading}{\headingfont}
+\captionsetup{labelfont={capheading,tealcolor}, font={small,graycolor}}
+
+% ---------------------------------------------------------------------
+% CALLOUT BOXES
+% ---------------------------------------------------------------------
+\newtcolorbox{warnbox}[1][]{
+  colback=warnBg, colframe=warnBorder, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=3pt, bottom=3pt, breakable,
+  before skip=4pt, after skip=4pt,
+  fonttitle=\headingfont\color{fgText}, coltitle=fgText,
+  title={\raisebox{-0.1em}{\textbf{!}}\ \ Important}, #1
+}
+\newtcolorbox{tipbox}[1][]{
+  colback=tipBg, colframe=tipBorder, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=3pt, bottom=3pt, breakable,
+  before skip=4pt, after skip=4pt,
+  fonttitle=\headingfont\color{fgText}, coltitle=fgText,
+  title={\raisebox{-0.1em}{\textbf{i}}\ \ Note}, #1
+}
+
+% ---------------------------------------------------------------------
+% MISC
+% ---------------------------------------------------------------------
+\setlist[itemize]{leftmargin=1.2em, itemsep=0.05em, topsep=0.15em, parsep=0.05em}
+\setlist[enumerate]{leftmargin=1.4em, itemsep=0.08em, topsep=0.15em, parsep=0.05em}
+\renewcommand{\arraystretch}{1.05}
+\setcounter{tocdepth}{1}
+\setlength{\parskip}{0.15em}
+
+\newcommand{\code}[1]{\texttt{\small\color{accentTeal}#1}}
+
+\begin{document}
+\sloppy
+
+% =======================================================================
+% TITLE BANNER (compact -- shares the first page with the TOC, not a
+% separate page, to keep the document as short as possible)
+% =======================================================================
+\begin{center}
+  {\headingfont\LARGE\color{headColor} File Backup Service}\\[0.2em]
+  {\lightfont\normalsize\color{accentTeal} Dockerized FastAPI + S3 + RDS SQL Server -- AWS Region Migration Playbook}\\[0.2em]
+  {\small\color{commentColor} Singapore (ap-southeast-1) $\rightarrow$ Sydney (ap-southeast-2) \quad|\quad Prepared by Firoz Mahmud \quad|\quad \today}
+\end{center}
+\vspace{0.3em}
+\hrule
+\vspace{0.6em}
+
+\tableofcontents
+\thispagestyle{fancy}
+\vspace{0.5em}
+
+% =======================================================================
+\section{Executive Summary}
+% =======================================================================
+
+This document specifies a proof-of-concept (POC) backend service, its AWS
+footprint, and a \textbf{region-migration playbook}: everything needed to
+move the whole stack --- compute, database, object storage, including data
+--- from \textbf{Singapore (ap-southeast-1)} to \textbf{Sydney
+(ap-southeast-2)} as concrete, runnable commands.
+
+Users \code{POST} a file plus optional description/tags; it streams to one
+of \textbf{three S3 buckets} routed by category (documents/media/archives,
+auto-detected or explicit), never touching local disk. A SQL Server row
+records where it landed. Swagger UI (\code{/docs}) is auto-generated by
+FastAPI. The app runs as a hardened, non-root container on the smallest
+practical Ubuntu EC2 instance, port 80 forwarded to the container.
+
+\textbf{What makes region migration painless}: every AWS-region-specific
+value lives in exactly one file, \code{app/config.py}. Migrating regions is
+a data-replication exercise plus an environment-variable change, not a code
+change (Section~\ref{sec:migration}).
+
+\begin{tipbox}
+All code here was smoke-tested end to end against a real SQL Server
+instance and S3-compatible store, and separately as the built Docker image
+(non-root, read-only filesystem, capabilities dropped) -- and is included
+directly from the source files, not retyped.
+\end{tipbox}
+
+% =======================================================================
+\section{Architecture Overview}
+% =======================================================================
+
+\begin{center}
+\begin{tikzpicture}[
+  box/.style={draw=headColor, fill=codeBg, rounded corners=3pt, minimum height=1.1cm, text width=3.1cm, align=center, font=\small},
+  region/.style={draw=accentGold, dashed, rounded corners=6pt, inner sep=10pt},
+  ec2box/.style={draw=accentTeal, dotted, rounded corners=4pt, inner sep=7pt},
+  arr/.style={-{Stealth[length=2.2mm]}, thick, color=accentTeal}
+]
+  \node[box] (client) {Client / Browser\\(Swagger UI, curl, apps)};
+  \node[box, right=2.9cm of client] (app) {Docker container\\FastAPI + Uvicorn\\(non-root, port 8000)};
+  \node[box, above right=0.7cm and 2.6cm of app] (rds) {RDS SQL Server\\files / file\_tags /\\access\_logs};
+  \node[box, below right=1.5cm and 2.6cm of app, text width=3.4cm] (s3) {3 S3 Buckets\\documents / media /\\archives};
+
+  \draw[arr] (client) -- node[above, font=\scriptsize] {HTTPS :80 $\to$ :8000} (app);
+  \draw[arr] (app) -- node[above, sloped, font=\scriptsize] {SQL (metadata)} (rds);
+  \draw[arr] (app) -- node[below, sloped, font=\scriptsize] {multipart PUT / presigned GET} (s3);
+
+  \node[ec2box, fit=(app), label={[font=\tiny\color{accentTeal}, yshift=-1pt]south:EC2 (Ubuntu, smallest viable size)}] {};
+  \node[region, fit=(app)(rds)(s3), label={[font=\small\headingfont\color{headColor}, yshift=-2pt]north:AWS Region: ap-southeast-1 (Singapore)}] {};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}
+  \item \textbf{EC2} runs one thing: the Docker container (Section~\ref{sec:docker}), port 80 $\to$ container 8000. Stateless -- no file data touches the container's own (read-only) filesystem, so migrating compute is just a new instance running the same image.
+  \item \textbf{RDS SQL Server} holds only metadata: three tables (Section~\ref{sec:schema}).
+  \item \textbf{Three S3 buckets} hold the file bytes; the app never returns S3 URLs directly, only short-lived presigned URLs.
+  \item RDS and all buckets sit behind a private VPC / bucket policy, public access blocked.
+\end{itemize}
+
+% =======================================================================
+\section[AWS Resource Sizing]{AWS Resource Sizing (Cost-Effective POC $\to$ Production Path)}
+% =======================================================================
+
+\begin{warnbox}
+Prices are \textbf{indicative on-demand, ap-southeast-1}, $\pm$15--20\,\% --
+confirm exact numbers via the \href{https://calculator.aws/}{AWS Pricing Calculator} before committing budget.
+\end{warnbox}
+
+\subsection{EC2 --- Application Server (Ubuntu, Docker)}
+
+\noindent \begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Attribute} & \textbf{This POC (as deployed)} \\
+\midrule
+Instance type & \textbf{t2.micro} (1 vCPU burstable, 1\,GiB RAM) -- lowest-cost general-purpose type; switch to t3.micro (similar price, 2 vCPU, better burst credits) only if you hit CPU-credit exhaustion \\
+\rowcolor{tableAlt} AMI & Ubuntu Server 22.04/24.04 LTS \\
+Root volume & \textbf{10\,GiB gp3} EBS -- app image is $\approx$145\,MB; this is Docker Engine + layer cache headroom, not app-driven \\
+\rowcolor{tableAlt} Est. cost (ap-southeast-1) & $\approx$ \$8.5/mo on-demand \\
+\bottomrule
+\end{tabularx}
+\textbf{IAM instance role} (not static keys) scoped to \texttt{s3:PutObject},
+\texttt{GetObject}, \texttt{DeleteObject}, \texttt{AbortMultipartUpload} on
+all three bucket ARNs (policy in Section~\ref{sec:deploy}). Security group:
+port 22 from admin IP only, port 80 from whatever needs Swagger/API access.
+
+\subsection{RDS --- SQL Server}
+
+\begin{warnbox}
+\textbf{Edition drives cost, not instance size.} Express is capped at
+10\,GiB/database (too small). Standard/Enterprise cost far more.
+\textbf{Web Edition}: no size cap, well below Standard, license permits this
+public-facing use case -- cheapest edition that fits and is compliant.
+\end{warnbox}
+
+\noindent \begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Attribute} & \textbf{Recommendation} \\
+\midrule
+Engine edition & \textbf{SQL Server 2019, Web Edition} \\
+\rowcolor{tableAlt} Instance class & \textbf{db.t3.small} (as deployed) -- verify orderable via \texttt{aws rds describe-orderable-db-instance-options --engine sqlserver-web} \\
+Storage & \textbf{20\,GiB gp3} (as deployed) \\
+\rowcolor{tableAlt} Multi-AZ & \textbf{Disabled} for POC; enable before production \\
+Public accessibility & \textbf{Disabled} --- reachable only from the app's security group \\
+\rowcolor{tableAlt} Est. cost (ap-southeast-1) & \textbf{\$109.34/mo} (actual AWS console quote: \$106.58 instance + \$2.76 storage, backups/encryption off) -- Microsoft licensing, not a sizing choice \\
+\bottomrule
+\end{tabularx}
+
+\subsection{S3 --- Three Buckets, One Per Category}
+
+Every upload routes into one of three buckets by category
+(\texttt{documents}/\texttt{media}/\texttt{archives}), auto-detected or
+explicit (Section~\ref{sec:app-routes}). Splitting storage this way costs
+nothing extra (billed per object, not per bucket) and buys tighter IAM
+scoping and blast-radius isolation later.
+
+\noindent \begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Attribute} & \textbf{Recommendation (all three buckets)} \\
+\midrule
+Storage class & \textbf{S3 Standard} \\
+\rowcolor{tableAlt} Versioning & \textbf{Disabled} -- not sensitive data, and versioning has a real storage-cost tail (old versions keep billing); turn on later if accidental-overwrite protection becomes worth the cost \\
+Encryption & SSE-S3 (AES-256), applied automatically by AWS at no cost -- not something to configure or pay extra for \\
+\rowcolor{tableAlt} Public access & Fully blocked; all reads go through short-lived presigned URLs \\
+Est. cost @ 100\,GB combined & $\approx$\$2.5/mo, scales with data not bucket count \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Monthly Cost Summary}
+
+\noindent \begin{tabularx}{\textwidth}{@{}l X X X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Component} & \textbf{POC scale} & \textbf{Prod-like (20\,GB RDS / 100\,GB S3)} & \textbf{Notes} \\
+\midrule
+EC2 t2.micro (Docker) & \$8.4/mo & \$8.4/mo & Compute is workload-driven, not data-volume-driven \\
+\rowcolor{tableAlt} RDS SQL Server Web, db.t3.small + 20\,GiB gp3 & \textbf{\$109.34/mo} (actual quote) & \$109.34/mo & License-inclusive rate dominates the bill \\
+S3 Standard (3 buckets) & $<$\$1/mo at a few GB & $\approx$\$2.5/mo at 100\,GB combined & Scales with total data, not bucket count \\
+\midrule
+\rowcolor{tableAlt} \textbf{Total (on-demand)} & \textbf{$\approx$ \$118/mo} & \textbf{$\approx$ \$120/mo} & Dominated by the SQL Server license; PostgreSQL would put this in the \$35--40/mo range instead \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Region cost note:} Sydney (ap-southeast-2) on-demand rates run
+$\approx$15--25\,\% above Singapore for EC2/RDS, directionally -- re-run the
+Pricing Calculator for the exact rate before migrating.
+
+% =======================================================================
+\section{Database Schema}
+\label{sec:schema}
+% =======================================================================
+
+A \code{files} row owns zero-or-more \code{file\_tags} rows (metadata) and
+\code{access\_logs} rows (audit trail), both \code{ON DELETE CASCADE}.
+
+\begin{tipbox}
+Two SQL Server fixes caught by testing against a real container: UUID
+columns use SQLAlchemy's portable \texttt{Uuid} type (maps to
+\texttt{UNIQUEIDENTIFIER}, not the Postgres-only \texttt{dialects.postgresql.UUID});
+and \texttt{s3\_key} is capped at 700 chars, not S3's 1024 limit, because
+SQL Server rejects a \texttt{UNIQUE} index over 900 bytes.
+\end{tipbox}
+
+\subsection{\texttt{files}}
+\noindent \begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Column} & \textbf{Type} & \textbf{Purpose} \\
+\midrule
+id & Uuid, PK & Primary key, generated client-side (\texttt{uuid4}); \texttt{UNIQUEIDENTIFIER} on SQL Server \\
+\rowcolor{tableAlt} original\_filename & varchar(512) & As uploaded by the client \\
+s3\_key & varchar(700), unique & Object key inside the bucket, e.g. \texttt{uploads/\{uuid\}/\{filename\}} -- capped for SQL Server's unique-index byte limit, see above \\
+\rowcolor{tableAlt} s3\_bucket & varchar(255) & Which of the three buckets the object lives in (recorded per-row, not just derived from category, so historical rows remain correct after a bucket/region migration) \\
+category & varchar(32) & \texttt{documents} / \texttt{media} / \texttt{archives} -- which bucket this file was routed to, filterable via \texttt{GET /api/v1/files?category=} \\
+\rowcolor{tableAlt} content\_type & varchar(255) & MIME type reported at upload time \\
+size\_bytes & bigint & Computed server-side while streaming, not trusted from the client \\
+\rowcolor{tableAlt} checksum\_sha256 & varchar(64) & Computed server-side while streaming to S3 \\
+description & text, nullable & Free-text metadata \\
+\rowcolor{tableAlt} is\_deleted & boolean & Soft-delete flag; S3 object is removed but the DB row is retained for audit \\
+uploaded\_at / updated\_at & timestamp & Set/maintained by the ORM \\
+\bottomrule
+\end{tabularx}
+
+\subsection{\texttt{file\_tags}}
+\noindent \begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Column} & \textbf{Type} & \textbf{Purpose} \\
+\midrule
+id & Uuid, PK & Primary key \\
+\rowcolor{tableAlt} file\_id & Uuid, FK $\to$ files.id (cascade delete) & Owning file \\
+tag\_key / tag\_value & varchar(128) / varchar(512) & Arbitrary metadata, e.g. \texttt{department=finance} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{\texttt{access\_logs}}
+\noindent \begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Column} & \textbf{Type} & \textbf{Purpose} \\
+\midrule
+id & Uuid, PK & Primary key \\
+\rowcolor{tableAlt} file\_id & Uuid, FK $\to$ files.id (cascade delete) & Owning file \\
+action & varchar(32) & One of \texttt{upload} / \texttt{download} / \texttt{delete} \\
+\rowcolor{tableAlt} accessed\_at & timestamp & When the action happened \\
+note & varchar(255), nullable & Optional free text \\
+\bottomrule
+\end{tabularx}
+
+\begin{tipbox}
+Tables are created at startup via \code{Base.metadata.create\_all()}
+(\code{app/main.py}) -- fine for a POC; replace with Alembic migrations
+before production, since \code{create\_all()} has no schema versioning.
+\end{tipbox}
+
+% =======================================================================
+\section{FastAPI Application}
+\label{sec:app}
+% =======================================================================
+
+All source lives in the repository; this section names the modules,
+classes, and functions rather than reprinting them.
+
+\subsection{Module Overview}
+\noindent \begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{File} & \textbf{Contents} \\
+\midrule
+\texttt{app/config.py} & \texttt{Settings} class -- \textbf{the only region-dependent file} (Section~\ref{sec:config}) \\
+\rowcolor{tableAlt} \texttt{app/database.py} & SQLAlchemy engine/session setup \\
+\texttt{app/models.py} & \texttt{FileRecord}, \texttt{FileTag}, \texttt{AccessLog} ORM classes (schema in Section~\ref{sec:schema}) \\
+\rowcolor{tableAlt} \texttt{app/schemas.py} & Pydantic request/response models, \texttt{UploadCategory} enum \\
+\texttt{app/crud.py} & \texttt{create\_file\_record()}, \texttt{get\_file()}, \texttt{list\_files()}, \texttt{soft\_delete\_file()}, \texttt{log\_action()}, \texttt{get\_logs()} \\
+\rowcolor{tableAlt} \texttt{app/s3\_client.py} & \texttt{upload\_fileobj()}, \texttt{delete\_object()}, \texttt{generate\_presigned\_download\_url()} \\
+\texttt{app/routers/files.py} & \texttt{/api/v1/files/*} endpoints, category routing (Section~\ref{sec:app-routes}) \\
+\rowcolor{tableAlt} \texttt{app/main.py} & FastAPI app, \texttt{/health}, \texttt{/api/v1/region-info} \\
+\texttt{scripts/*} & Migration automation (Section~\ref{sec:scripts}) \\
+\rowcolor{tableAlt} \texttt{Dockerfile}, \texttt{docker-compose.yml} & Section~\ref{sec:docker} \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Configuration --- the Region-Dependent File}
+\label{sec:config}
+
+\textbf{Every other file reads AWS region, bucket names, and database
+location exclusively through \texttt{app/config.py}'s \texttt{Settings}
+class} -- nothing else changes on a region migration. Key fields:
+\texttt{aws\_region}, \texttt{s3\_bucket\_documents}/\texttt{\_media}/\texttt{\_archives},
+\texttt{database\_url}; method \texttt{bucket\_for\_category(category)} maps
+an upload category to its bucket name.
+
+\subsection{S3 Client and CRUD}
+\texttt{s3\_client.upload\_fileobj()} streams to S3 via multipart upload
+unconditionally (so the checksum-while-streaming logic is size-independent),
+returning \texttt{(sha256\_checksum, size\_bytes)}.
+\texttt{crud.get\_file()} and \texttt{crud.list\_files()} carry the real
+MSSQL portability fix noted in Section~\ref{sec:verification}.
+
+\subsection{API Routes}
+\label{sec:app-routes}
+
+In \texttt{upload\_file()}: an explicit \texttt{category} field wins (422 if
+invalid); otherwise it's inferred from content type via
+\texttt{\_infer\_category()}. The resolved category picks the bucket through
+\texttt{bucket\_for\_category()}, written to \texttt{files.s3\_bucket} so
+\texttt{download}/\texttt{delete} never re-derive it.
+
+\subsection{Dependencies}
+FastAPI, Uvicorn, SQLAlchemy, pymssql, boto3, pydantic-settings,
+python-multipart, python-dotenv -- pinned versions in \texttt{requirements.txt}.
+
+\subsection{API Surface (as generated by Swagger / OpenAPI)}
+\label{sec:verification}
+
+\noindent \begin{tabularx}{\textwidth}{@{}lp{4.3cm}X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Method} & \textbf{Path} & \textbf{Purpose} \\
+\midrule
+POST & \texttt{/api/\allowbreak v1/\allowbreak files/\allowbreak upload} & Upload a file (multipart form: file, category [optional], description, tags JSON) \\
+\rowcolor{tableAlt} GET & \texttt{/api/\allowbreak v1/\allowbreak files} & Paginated list, optional \texttt{?category=documents|media|archives} filter \\
+GET & \texttt{/api/\allowbreak v1/\allowbreak files/\allowbreak\{file\_id\}} & Metadata + category + tags for one file \\
+\rowcolor{tableAlt} GET & \texttt{/api/\allowbreak v1/\allowbreak files/\allowbreak\{file\_id\}/\allowbreak download} & Returns a presigned URL against whichever bucket the file lives in, time-limited \\
+GET & \texttt{/api/\allowbreak v1/\allowbreak files/\allowbreak\{file\_id\}/\allowbreak logs} & Access log for one file \\
+\rowcolor{tableAlt} DELETE & \texttt{/api/\allowbreak v1/\allowbreak files/\allowbreak\{file\_id\}} & Soft-delete the row, hard-delete the S3 object from its bucket \\
+GET & \texttt{/health} & Liveness probe \\
+\rowcolor{tableAlt} GET & \texttt{/api/\allowbreak v1/\allowbreak region-info} & Reports region, all three bucket names, and DB host this instance is currently bound to --- the fastest way to confirm a migration cutover actually took effect \\
+\bottomrule
+\end{tabularx}
+
+Swagger UI is auto-generated at \texttt{/docs} (ReDoc at \texttt{/redoc}),
+zero extra code.
+
+\begin{tipbox}
+Read back from the app's live OpenAPI schema during testing, not copied
+from a design doc. That same test run caught a real MSSQL bug:
+SQLAlchemy's \texttt{.is\_(False)} renders \texttt{IS 0}, which SQL Server
+rejects -- fixed with \texttt{== False} instead (\texttt{app/crud.py} above).
+\end{tipbox}
+
+% =======================================================================
+\section{Containerization}
+\label{sec:docker}
+% =======================================================================
+
+Multi-stage build, distroless runtime (no shell, no package manager),
+non-root by default; compose adds read-only-filesystem and
+capability-dropping. Verified by actually building and running it (tip box
+at end of section), not asserted.
+
+\subsection{Dockerfile}
+\label{sec:dockerfile}
+
+Multi-stage (full source in \texttt{Dockerfile} in the repository). Builder
+installs deps with a full Debian userland, then is discarded -- only
+packages + app code cross into the final image,
+\texttt{gcr.io/distroless/python3-debian12:nonroot} (no \texttt{/bin/sh},
+confirmed by trying to exec one). No compiler needed in the builder:
+\texttt{pymssql} ships a prebuilt wheel with FreeTDS bundled.
+
+\subsection{docker-compose.yml}
+
+Three services (full source in \texttt{docker-compose.yml}): \texttt{app},
+plus \texttt{db}/\texttt{db-init} standing in for RDS locally --
+production points \texttt{DATABASE\_URL} at real RDS instead. \texttt{app}
+hardening: read-only rootfs (tmpfs for upload spooling),
+\texttt{cap\_drop: ALL}, \texttt{no-new-privileges}, explicit non-root UID.
+Host port 80 $\to$ container 8000.
+
+\begin{tipbox}
+\texttt{db} can't go distroless (no such SQL Server image exists) but runs
+non-root by default. \texttt{cap\_drop: ALL} alone breaks it: \texttt{sqlservr}
+has \texttt{cap\_net\_bind\_service} as a \emph{file} capability, which the
+kernel won't grant at exec unless it's in the caller's bounding set --
+fixed by adding back just \texttt{NET\_BIND\_SERVICE}.
+\end{tipbox}
+
+\subsection{Environment Templates}
+
+\texttt{.env.example} is for running the app directly; \texttt{.env.docker.example}
+is what \texttt{docker compose up} reads for \texttt{\$\{VAR\}} substitution
+(not mounted into the container; \texttt{DATABASE\_URL} is assembled from
+\texttt{MSSQL\_*} + the \texttt{db} service name). Both templates are in
+the repository root.
+
+\begin{warnbox}
+Docker Compose prefers shell-exported env vars over \texttt{.env}, per-variable
+-- \textbf{run \texttt{env | grep AWS\_} before \texttt{docker compose up}}
+on shared machines, unset any hits (\texttt{env -u AWS\_ACCESS\_KEY\_ID -u
+AWS\_SECRET\_ACCESS\_KEY -u AWS\_REGION docker compose up}).
+\end{warnbox}
+
+\subsection{Verification}
+
+\noindent \begin{tabularx}{\textwidth}{@{}p{4.2cm} X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Check} & \textbf{Result} \\
+\midrule
+No shell in the final image & \texttt{docker run --entrypoint /bin/sh <image>} $\to$ \texttt{stat /bin/sh: no such file or directory} \\
+\rowcolor{tableAlt} Runs as non-root & \texttt{os.getuid()} inside the container $\to$ \texttt{65532} \\
+Image size & 145\,MB (distroless base + app deps + code) \\
+\rowcolor{tableAlt} Driver imports cleanly with no missing shared libs & \texttt{import pymssql; sqlalchemy.create\_engine('mssql+pymssql://...')} succeeds inside the container with no apt packages installed \\
+Full request cycle through the hardened container & upload $\to$ correct bucket per category $\to$ category-filtered list $\to$ download (byte-for-byte match) $\to$ delete $\to$ 404, all through host port 80, with \texttt{read\_only: true} and \texttt{cap\_drop: ALL} in effect \\
+\bottomrule
+\end{tabularx}
+
+% =======================================================================
+\section[Deployment Guide]{Deployment Guide --- Source Region (Singapore)}
+\label{sec:deploy}
+% =======================================================================
+
+\subsection{One-Time Setup}
+\begin{enumerate}
+  \item \textbf{VPC}: \texttt{vpc-04d1607e143b9ee1d} (Singapore). EC2 and RDS in the same VPC.
+  \item \textbf{Security groups}: \texttt{dev-ssh-access-sg} (inbound 22 from admin IP), \texttt{dev-web-access-sg} (inbound 80 from API/Swagger consumers), \texttt{dev-mssql-access} (inbound 1433 from \texttt{dev-web-access-sg} only). EC2 gets both \texttt{dev-ssh-access-sg} and \texttt{dev-web-access-sg}.
+  \item \textbf{RDS}: \texttt{file-backup-db}, \texttt{db.t3.small} SQL Server 2019 \textbf{Web Edition}, 20\,GiB gp3, Multi-AZ off, in \texttt{dev-mssql-access}, VPC \texttt{vpc-04d1607e143b9ee1d}. Master user \texttt{admin}. Endpoint: \texttt{file-backup-db.c9g4u6ekudby.\allowbreak ap-southeast-1.rds.amazonaws.com:1433}.
+  \begin{warnbox}
+  \textbf{As deployed, this instance is publicly accessible} (has a public IP), diverging from this document's recommendation of \textbf{Disabled}. Access is still restricted by \texttt{dev-mssql-access} (only \texttt{dev-web-access-sg} allowed in) -- confirmed by testing: unreachable from an outside IP, times out at the TCP level. That security-group restriction is doing the job public-access-off would normally do; still, prefer \textbf{Disabled} for anything beyond this POC, since it removes a layer of exposure the SG rule alone doesn't (e.g. a future SG rule mistake).
+  \end{warnbox}
+  \item \textbf{Create the database}: unlike MySQL/PostgreSQL on RDS, SQL Server has no "initial database name" option at creation time -- connect after the instance shows \texttt{Available} and create it yourself:
+\begin{lstlisting}[style=bashStyle]
+sqlcmd -S file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com -U admin -P 'devpassword' -C -N \
+    -Q "CREATE DATABASE filebackup;"
+\end{lstlisting}
+  \item \textbf{S3}: create all three buckets in \texttt{ap-southeast-1} -- \texttt{myco-file-backup-documents-sg}, \texttt{-media-sg}, \texttt{-archives-sg} -- each S3 Standard, public access fully blocked (versioning left off; see Section~3.3).
+  \item \textbf{IAM role}: create \texttt{ec2-file-backup-role}, policy scoped
+  to \texttt{s3:PutObject}, \texttt{GetObject}, \texttt{DeleteObject},
+  \texttt{AbortMultipartUpload}, \texttt{ListMultipartUploadParts} on the
+  three bucket ARNs only, never \texttt{s3:*}/\texttt{Resource:*}. Attach
+  to the EC2 instance profile.
+  \item \textbf{EC2}: \texttt{dev-file-backup-server-ec2}, a \texttt{t2.micro}
+  (10\,GiB gp3 root volume), \textbf{Ubuntu Server 22.04 or 24.04 LTS},
+  with \texttt{dev-ssh-access-sg} + \texttt{dev-web-access-sg} and the IAM
+  role attached (key pair \texttt{dev-ssh-access-kp}).
+\end{enumerate}
+
+\subsection{On the EC2 Instance}
+\begin{lstlisting}[style=bashStyle, caption={Install Docker on Ubuntu (official convenience script)}]
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker ubuntu
+newgrp docker  # or log out/in for the group change to take effect
+docker --version
+docker compose version
+\end{lstlisting}
+
+\begin{lstlisting}[style=bashStyle, caption={Deploy the app}]
+git clone <your-repo-url> /opt/file-backup
+cd /opt/file-backup
+
+cp .env.docker.example .env
+# Edit .env: set AWS_REGION and the three S3_BUCKET_* names for this region.
+# Leave AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY blank -- the IAM instance
+# role supplies credentials automatically. Set MSSQL_SA_PASSWORD to a
+# strong value if running the bundled db container; if pointing at real
+# RDS instead, skip the db/db-init services (docker compose up app) and
+# set DATABASE_URL directly as an override.
+
+docker compose up -d --build
+docker compose ps          # app, db, db-init all healthy/exited-0
+curl http://localhost/health
+# Swagger UI: http://<ec2-public-ip>/docs
+\end{lstlisting}
+
+\begin{tipbox}
+Port 80 $\to$ container 8000, Swagger reachable with no reverse-proxy step.
+Before real usage: TLS termination (Nginx/ALB) in front, \texttt{dev-web-access-sg}
+restricted to 443.
+\end{tipbox}
+
+\subsection{Pointing at Real RDS Instead of the Bundled \texttt{db} Container}
+Once RDS exists, set \texttt{DATABASE\_URL} in \texttt{.env} and bring up
+only \texttt{app} with \texttt{--no-deps} (otherwise Compose still starts
+\texttt{db}/\texttt{db-init} first, per their \texttt{depends\_on}):
+\begin{lstlisting}[style=bashStyle]
+echo 'DATABASE_URL=mssql+pymssql://admin:devpassword@file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com:1433/filebackup' >> .env
+docker compose up -d --build --no-deps app
+\end{lstlisting}
+
+% =======================================================================
+\section[Region Migration Runbook]{\texorpdfstring{Region Migration Runbook: Singapore $\to$ Sydney}{Region Migration Runbook: Singapore to Sydney}}
+\label{sec:migration}
+% =======================================================================
+
+What changes on migration: \texttt{AWS\_REGION}, the three
+\texttt{S3\_BUCKET\_*} names (buckets don't move between regions),
+\texttt{DATABASE\_URL}, and the EC2 instance itself (new instance, same
+image). Nothing else -- app code, schema, and IAM policy shape are identical.
+
+\subsection{Region Reference}
+\noindent \begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{City} & \textbf{Region code} & \textbf{Role} \\
+\midrule
+Singapore & \texttt{ap-southeast-1} & Source (current) \\
+\rowcolor{tableAlt} Sydney & \texttt{ap-southeast-2} & Migration target \\
+\bottomrule
+\end{tabularx}
+
+\subsection{S3 Transfer Mechanics and Cost}
+\label{sec:transfer-mechanics}
+
+\texttt{aws s3 sync} between two \texttt{s3://} URIs is a server-side copy
+-- bytes move directly between buckets over AWS's network, never through
+the invoking machine, so a temporary EC2 instance in the source region
+buys nothing here. Cost is AWS's inter-region rate ($\approx$\$0.02/GB,
+confirm exact rate in the Calculator) -- $\approx$\$4 for 200\,GB, same
+whether split across three buckets or one. Running the three bucket syncs
+\textbf{in parallel} (what \texttt{s3\_migrate\_all\_buckets.sh} does) is
+what actually saves wall-clock time.
+
+\subsection{Phase 0 --- Pre-Migration Preparation (source stays live, zero risk)}
+\begin{enumerate}
+  \item \texttt{dev-ssh-access-kp}, \texttt{dev-ssh-access-sg}, \texttt{dev-web-access-sg}, \texttt{dev-mssql-access} already exist in \texttt{ap-southeast-2} (Sydney) -- confirm a target VPC and a DB subnet group spanning $\ge$2 AZs exist too.
+  \item Create all three destination S3 buckets in one call:
+\begin{lstlisting}[style=bashStyle]
+./scripts/s3_migrate_all_buckets.sh create-dest \
+    ap-southeast-1 sg ap-southeast-2 sydney
+\end{lstlisting}
+  \item Create an IAM role in the target region identical in shape to \texttt{ec2-file-backup-role}, scoped to the three new bucket ARNs.
+  \item If the source RDS instance is encrypted, create a KMS key in the target region (KMS keys are regional and cannot be copied directly; the snapshot-copy step re-encrypts under a target-region key).
+\end{enumerate}
+
+\subsection{Phase 1 --- Warm Data Sync (source still live)}
+
+\textbf{S3} (all 3 buckets in parallel, repeatable):
+\begin{lstlisting}[style=bashStyle]
+./scripts/s3_migrate_all_buckets.sh warm \
+    ap-southeast-1 sg ap-southeast-2 sydney
+\end{lstlisting}
+
+\textbf{RDS} (non-destructive snapshot copy + restore; source untouched):
+\begin{lstlisting}[style=bashStyle]
+python scripts/rds_region_migration.py \
+    --source-region ap-southeast-1 \
+    --target-region ap-southeast-2 \
+    --db-instance-identifier file-backup-db \
+    --target-db-instance-identifier file-backup-db-sydney \
+    --db-instance-class db.t3.small \
+    --subnet-group filebackup-subnet-group-sydney \
+    --security-group-ids sg-xxxxxxxx
+\end{lstlisting}
+
+\subsection{Phase 2 --- Cutover Window (brief write-pause)}
+\begin{enumerate}
+  \item Maintenance mode: \texttt{docker compose stop app}.
+  \item Final sync (catches anything since the warm pass):
+\begin{lstlisting}[style=bashStyle]
+./scripts/s3_migrate_all_buckets.sh final \
+    ap-southeast-1 sg ap-southeast-2 sydney
+\end{lstlisting}
+  \item One more RDS snapshot-copy-restore (same command as Phase 1).
+  \item Verify:
+\begin{lstlisting}[style=bashStyle]
+./scripts/s3_migrate_all_buckets.sh verify \
+    ap-southeast-1 sg ap-southeast-2 sydney
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Phase 3 --- Redeploy in the Target Region}
+\begin{enumerate}
+  \item Launch EC2 in \texttt{ap-southeast-2} (same spec as Section~\ref{sec:deploy}: Ubuntu LTS, t2.micro), install Docker, deploy the identical code/image.
+  \item Edit \texttt{.env}:
+\begin{lstlisting}[style=bashStyle]
+AWS_REGION=ap-southeast-2
+S3_BUCKET_DOCUMENTS=myco-file-backup-documents-sydney
+S3_BUCKET_MEDIA=myco-file-backup-media-sydney
+S3_BUCKET_ARCHIVES=myco-file-backup-archives-sydney
+DATABASE_URL=mssql+pymssql://admin:devpassword@file-backup-db-sydney.xxxxx.ap-southeast-2.rds.amazonaws.com:1433/filebackup
+\end{lstlisting}
+  \item Start and confirm the cutover took effect:
+\begin{lstlisting}[style=bashStyle]
+docker compose up -d --build --no-deps app
+curl http://<new-ec2-ip>/api/v1/region-info
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{Phase 4 --- Verification Checklist}
+\begin{itemize}[label=$\square$]
+  \item S3 object count/byte size match, all three buckets (Phase 2 verify output)
+  \item Row counts match for \texttt{files}, \texttt{file\_tags}, \texttt{access\_logs}
+  \item \texttt{/health} $\to$ 200; \texttt{/api/v1/region-info} reports target-region values
+  \item Full smoke test per category: upload $\to$ list $\to$ get $\to$ download $\to$ delete $\to$ 404 (Section~\ref{sec:verification})
+  \item A few \emph{pre-existing} files from each bucket download correctly -- proves copied data, not just new writes, is intact
+\end{itemize}
+
+\subsection{Phase 5 --- Traffic Cutover}
+Point the client-facing address at the new EC2 instance. Keep the
+source-region stack running, untouched, for a safety window.
+
+\subsection{Phase 6 --- Decommission the Source Region}
+After $\ge$7 days of the target serving real traffic without incident: take
+a final RDS snapshot, then delete the source RDS instance, EC2 instance,
+and -- last -- the source S3 buckets.
+
+\begin{tipbox}
+\textbf{Rollback:} Phases 0--1 never touch the source stack, so rollback
+before Phase 5 is simply not cutting over. After Phase 5 but before Phase 6,
+rollback is a \texttt{.env} revert on the still-intact source instance plus
+re-pointing traffic -- why Phase 6 stays last and manual.
+\end{tipbox}
+
+% =======================================================================
+\section{Migration Automation Scripts}
+\label{sec:scripts}
+% =======================================================================
+
+Full source for all three is in \texttt{scripts/} in the repository;
+idempotent where it matters, syntax-validated before inclusion in this
+project.
+
+\noindent \begin{tabularx}{\textwidth}{@{}l X@{}}
+\toprule
+\rowcolor{tableHead} \textbf{Script} & \textbf{What it does} \\
+\midrule
+\texttt{rds\_region\_migration.py} & Snapshots the source RDS instance, copies the snapshot cross-region, restores a new instance, prints the endpoint. Engine-agnostic, non-destructive to the source. Args: \texttt{--source-region}, \texttt{--target-region}, \texttt{--db-instance-identifier}, \texttt{--target-db-instance-identifier}, \texttt{--db-instance-class}, \texttt{--subnet-group}, \texttt{--security-group-ids}, \texttt{--kms-key-id} \\
+\rowcolor{tableAlt} \texttt{s3\_region\_migration.sh} & Single-bucket \texttt{aws s3 sync} primitive: \texttt{create-dest}/\texttt{warm}/\texttt{final}/\texttt{verify} modes \\
+\texttt{s3\_migrate\_all\_buckets.sh} & Runs the script above across \texttt{documents}/\texttt{media}/\texttt{archives} in parallel (background jobs + \texttt{wait}) \\
+\bottomrule
+\end{tabularx}
+
+% =======================================================================
+\section{Security Notes}
+% =======================================================================
+\begin{itemize}
+  \item \textbf{IAM instance role}, not static keys; S3 policy scoped to the three bucket ARNs only, never \texttt{s3:*}.
+  \item \textbf{Presigned URLs only} (3600s expiry); RDS never public; soft deletes keep an audit trail; public access block + free SSE-S3 on all buckets.
+  \item \textbf{Container hardening} (Section~\ref{sec:docker}): no shell/package manager, non-root UID, read-only rootfs, capabilities dropped.
+  \item \textbf{Shell-env precedence}: Compose prefers exported shell vars over \texttt{.env} -- run \texttt{env | grep AWS\_} first on shared machines.
+\end{itemize}
+
+% =======================================================================
+\section{Summary}
+% =======================================================================
+A working, tested backend -- three S3 buckets, RDS SQL Server, a hardened
+non-root container on the smallest practical EC2 instance, Swagger on port
+80 -- with region config isolated to one file, so migration is a
+data-replication/config exercise, not a rewrite. The bill is dominated by
+the SQL Server license ($\approx$\$70--90/mo; Section~3), the real cost
+lever. Practice Phases 0--4 of Section~\ref{sec:migration} freely against
+Sydney; nothing touches Singapore until Phase 6.
+
+\end{document}
