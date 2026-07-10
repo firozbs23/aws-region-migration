@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.config import get_settings
-from app.database import Base, engine
+from app.database import Base, ensure_database_exists, get_engine
 from app.routers import files as files_router
 from app.schemas import RegionInfo
 
@@ -15,7 +15,8 @@ async def lifespan(app: FastAPI):
     # POC convenience only: creates tables if they don't exist. In a real
     # environment this is replaced by Alembic migrations run as a
     # deployment step.
-    Base.metadata.create_all(bind=engine)
+    ensure_database_exists()
+    Base.metadata.create_all(bind=get_engine())
     yield
 
 

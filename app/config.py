@@ -6,9 +6,12 @@ development). This is the ONLY file that needs to change when the stack is
 migrated from one AWS region to another.
 """
 from functools import lru_cache
+import re
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_DB_NAME_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class Settings(BaseSettings):
@@ -57,16 +60,22 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_db_config(self) -> "Settings":
-        host = self.db_host.strip()
-        if not host:
+        self.db_host = self.db_host.strip()
+        self.db_user = self.db_user.strip()
+        self.db_password = self.db_password.strip()
+        self.db_name = self.db_name.strip()
+
+        if not self.db_host:
             raise ValueError("DB_HOST must be set to your RDS endpoint.")
-        if host in {"localhost", "127.0.0.1", "db"}:
+        if self.db_host in {"localhost", "127.0.0.1", "db"}:
             raise ValueError(
-                f"DB_HOST is '{host}' but must be your RDS endpoint "
+                f"DB_HOST is '{self.db_host}' but must be your RDS endpoint "
                 f"(e.g. file-backup-db.xxxxx.ap-southeast-1.rds.amazonaws.com)."
             )
         if not self.db_password:
             raise ValueError("DB_PASSWORD must be set to your RDS master password.")
+        if not _DB_NAME_RE.match(self.db_name):
+            raise ValueError(f"DB_NAME '{self.db_name}' is not a valid SQL Server identifier.")
         return self
 
     def bucket_for_category(self, category: str) -> str:

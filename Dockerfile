@@ -1,28 +1,37 @@
 # syntax=docker/dockerfile:1
 #
-# Multi-stage: builder has a full Debian userland to install deps, then is
-# discarded. Runtime is Google's distroless Python base (no shell, no
-# package manager) matched to the same Python/Debian version as the builder.
-# All deps (including pymssql) ship prebuilt wheels, so the builder needs no
-# compiler either.
+# Multi-stage build: builder installs Python deps; runtime adds Microsoft's
+# ODBC Driver 18 for SQL Server (AWS-recommended for RDS; pymssql/FreeTDS
+# often fails TLS auth with misleading "login failed" errors).
 
 FROM python:3.11-slim-bookworm AS builder
 WORKDIR /build
 COPY requirements.txt .
 RUN pip install --no-cache-dir --target=/deps -r requirements.txt
 
-FROM gcr.io/distroless/python3-debian12:nonroot AS runtime
-# ":nonroot" already runs as uid/gid 65532, no shell, no setuid binaries.
+FROM python:3.11-slim-bookworm AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl ca-certificates gnupg unixodbc \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+        | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-prod.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" \
+        > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 ENV PYTHONPATH=/deps \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 COPY --from=builder /deps /deps
 COPY app ./app
+RUN useradd -u 65532 -r -M -s /usr/sbin/nologin appuser \
+    && chown -R 65532:65532 /app /deps
+USER 65532
 EXPOSE 8000
 
-# No curl/wget in distroless; the interpreter itself probes the process.
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=5 \
     CMD ["python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
 
 ENTRYPOINT ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
