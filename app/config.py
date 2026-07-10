@@ -6,9 +6,8 @@ development). This is the ONLY file that needs to change when the stack is
 migrated from one AWS region to another.
 """
 from functools import lru_cache
-from urllib.parse import quote_plus
 
-from pydantic import Field
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,14 +32,12 @@ class Settings(BaseSettings):
     s3_bucket_media: str = "myco-file-backup-media-sg"
     s3_bucket_archives: str = "myco-file-backup-archives-sg"
 
-    # RDS SQL Server connection. Prefer DB_PASSWORD (no URL-encoding headaches).
-    # DATABASE_URL is still accepted as a full override when set.
+    # RDS SQL Server connection (use DB_* vars -- do NOT use DATABASE_URL).
     db_host: str = "file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com"
     db_port: int = 1433
     db_user: str = "admin"
     db_password: str = ""
     db_name: str = "filebackup"
-    database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     # ================================================================
 
     # ---- AWS credentials ----
@@ -58,21 +55,19 @@ class Settings(BaseSettings):
     db_pool_size: int = 5
     db_max_overflow: int = 5
 
-    @property
-    def resolved_database_url(self) -> str:
-        if self.database_url:
-            return self.database_url
-        if not self.db_password:
+    @model_validator(mode="after")
+    def validate_db_config(self) -> "Settings":
+        host = self.db_host.strip()
+        if not host:
+            raise ValueError("DB_HOST must be set to your RDS endpoint.")
+        if host in {"localhost", "127.0.0.1", "db"}:
             raise ValueError(
-                "DB_PASSWORD is not set. Add it to .env (RDS master password). "
-                "Or set DATABASE_URL to a full mssql+pymssql://... connection string."
+                f"DB_HOST is '{host}' but must be your RDS endpoint "
+                f"(e.g. file-backup-db.xxxxx.ap-southeast-1.rds.amazonaws.com)."
             )
-        user = quote_plus(self.db_user)
-        password = quote_plus(self.db_password)
-        return (
-            f"mssql+pymssql://{user}:{password}"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
+        if not self.db_password:
+            raise ValueError("DB_PASSWORD must be set to your RDS master password.")
+        return self
 
     def bucket_for_category(self, category: str) -> str:
         return {

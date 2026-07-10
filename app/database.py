@@ -1,3 +1,4 @@
+import pymssql
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
@@ -5,16 +6,24 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# RDS SQL Server requires encrypted connections; pymssql defaults to 'request'
-# which can fail with misleading "login failed" errors when force_ssl is on.
-RDS_CONNECT_ARGS = {
-    "tds_version": "7.4",
-    "encryption": "require",
-}
+
+def _connect():
+    # Explicit pymssql.connect() avoids SQLAlchemy URL parsing issues that
+    # can silently fall back to localhost with complex RDS hostnames/passwords.
+    return pymssql.connect(
+        server=settings.db_host,
+        port=settings.db_port,
+        user=settings.db_user,
+        password=settings.db_password,
+        database=settings.db_name,
+        tds_version="7.4",
+        encryption="require",
+    )
+
 
 engine = create_engine(
-    settings.resolved_database_url,
-    connect_args=RDS_CONNECT_ARGS,
+    "mssql+pymssql://",
+    creator=_connect,
     pool_size=settings.db_pool_size,
     max_overflow=settings.db_max_overflow,
     pool_pre_ping=True,

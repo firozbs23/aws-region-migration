@@ -1,14 +1,17 @@
-# Production / EC2: copy .env.example to .env, set DB_PASSWORD to your RDS
-# master password, then `docker compose up`. Database is AWS RDS SQL Server.
+# Production / EC2: copy .env.example to .env, set DB_PASSWORD, then
+# `docker compose up`. Database is AWS RDS SQL Server (DB_* vars only).
 
 services:
   app:
+    container_name: file-server
     build:
       context: .
       dockerfile: Dockerfile
     image: file-backup-service:latest
+    env_file:
+      - .env
     ports:
-      - "8000:8000"
+      - "80:8000"
     environment:
       APP_ENV: ${APP_ENV:-poc}
       AWS_REGION: ${AWS_REGION:-ap-southeast-1}
@@ -38,5 +41,5 @@ services:
       test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
       interval: 30s
       timeout: 3s
-      start_period: 5s
-      retries: 3
+      start_period: 15s
+      retries: 5

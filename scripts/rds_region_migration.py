@@ -133,7 +133,7 @@ def main() -> int:
     endpoint = inst["Endpoint"]["Address"]
     port = inst["Endpoint"]["Port"]
     log(f"Step 4/4: done. New RDS endpoint: {endpoint}:{port}")
-    log("Next: update DB_HOST/DB_PASSWORD (or DATABASE_URL), restart the app, run the verification checklist.")
+    log("Next: update DB_HOST/DB_PASSWORD, restart the app, run the verification checklist.")
     return 0
 
 
