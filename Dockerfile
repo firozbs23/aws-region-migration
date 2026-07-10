@@ -26,7 +26,9 @@ ENV PYTHONPATH=/deps \
     PYTHONUNBUFFERED=1
 COPY --from=builder /deps /deps
 COPY app ./app
-RUN useradd -u 65532 -r -M -s /usr/sbin/nologin appuser \
+COPY scripts/check_db.py scripts/check_aws.py scripts/docker-entrypoint.sh ./scripts/
+RUN chmod +x /app/scripts/docker-entrypoint.sh \
+    && useradd -u 65532 -r -M -s /usr/sbin/nologin appuser \
     && chown -R 65532:65532 /app /deps
 USER 65532
 EXPOSE 8000
@@ -34,4 +36,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=5 \
     CMD ["python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"]
 
-ENTRYPOINT ["python3", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]

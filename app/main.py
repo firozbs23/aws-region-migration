@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,6 +8,7 @@ from app.database import Base, ensure_database_exists, get_engine
 from app.routers import files as files_router
 from app.schemas import RegionInfo
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
@@ -15,6 +17,12 @@ async def lifespan(app: FastAPI):
     # POC convenience only: creates tables if they don't exist. In a real
     # environment this is replaced by Alembic migrations run as a
     # deployment step.
+    logger.info(
+        "DB init via pyodbc: host=%s user=%s database=%s",
+        settings.db_host,
+        settings.db_user,
+        settings.db_name,
+    )
     ensure_database_exists()
     Base.metadata.create_all(bind=get_engine())
     yield

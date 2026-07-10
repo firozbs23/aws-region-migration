@@ -589,7 +589,7 @@ Full request cycle through the hardened container & upload $\to$ correct bucket 
   \end{warnbox}
   \item \textbf{Create the database}: unlike MySQL/PostgreSQL on RDS, SQL Server has no "initial database name" option at creation time -- connect after the instance shows \texttt{Available} and create it yourself:
 \begin{lstlisting}[style=bashStyle]
-sqlcmd -S file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com -U admin -P 'demo-password' -C -N \
+sqlcmd -S file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com -U admin -P 'devpassword' -C -N \
     -Q "CREATE DATABASE filebackup;"
 \end{lstlisting}
   \item \textbf{S3}: create all three buckets in \texttt{ap-southeast-1} -- \texttt{myco-file-backup-documents-sg}, \texttt{-media-sg}, \texttt{-archives-sg} -- each S3 Standard, public access fully blocked (versioning left off; see Section~3.3).
@@ -724,7 +724,7 @@ S3_BUCKET_DOCUMENTS=myco-file-backup-documents-sydney
 S3_BUCKET_MEDIA=myco-file-backup-media-sydney
 S3_BUCKET_ARCHIVES=myco-file-backup-archives-sydney
 DB_HOST=file-backup-db-sydney.xxxxx.ap-southeast-2.rds.amazonaws.com
-DB_PASSWORD=demo-password
+DB_PASSWORD=devpassword
 DB_NAME=filebackup
 \end{lstlisting}
   \item Start and confirm the cutover took effect:

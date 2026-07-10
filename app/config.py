@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     aws_secret_access_key: str | None = None
 
     # ---- S3 behaviour ----
+    # When true, buckets are public (bucket policy Principal "*") and the app
+    # uses unsigned S3 requests -- no IAM role or access keys required.
+    s3_public_access: bool = True
     s3_presigned_url_expiry_seconds: int = 3600
     max_upload_size_mb: int = 100
 
@@ -59,11 +62,22 @@ class Settings(BaseSettings):
     db_max_overflow: int = 5
 
     @model_validator(mode="after")
-    def validate_db_config(self) -> "Settings":
+    def validate_settings(self) -> "Settings":
         self.db_host = self.db_host.strip()
         self.db_user = self.db_user.strip()
         self.db_password = self.db_password.strip()
         self.db_name = self.db_name.strip()
+        self.aws_region = self.aws_region.strip()
+
+        # Empty strings in .env must not block the EC2 instance IAM role.
+        if not (self.aws_access_key_id or "").strip():
+            self.aws_access_key_id = None
+        else:
+            self.aws_access_key_id = self.aws_access_key_id.strip()
+        if not (self.aws_secret_access_key or "").strip():
+            self.aws_secret_access_key = None
+        else:
+            self.aws_secret_access_key = self.aws_secret_access_key.strip()
 
         if not self.db_host:
             raise ValueError("DB_HOST must be set to your RDS endpoint.")

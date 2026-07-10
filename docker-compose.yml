@@ -1,5 +1,6 @@
-# Production / EC2: copy .env.example to .env, set DB_PASSWORD, then
-# `docker compose up`. Database is AWS RDS SQL Server (DB_* vars only).
+# Production / EC2: copy .env.example to .env, fill in values, then
+# `docker compose up`. All config comes from .env via env_file only --
+# do NOT export AWS_* in your shell or they used to override this file.
 
 services:
   app:
@@ -12,19 +13,6 @@ services:
       - .env
     ports:
       - "80:8000"
-    environment:
-      APP_ENV: ${APP_ENV:-poc}
-      AWS_REGION: ${AWS_REGION:-ap-southeast-1}
-      S3_BUCKET_DOCUMENTS: ${S3_BUCKET_DOCUMENTS}
-      S3_BUCKET_MEDIA: ${S3_BUCKET_MEDIA}
-      S3_BUCKET_ARCHIVES: ${S3_BUCKET_ARCHIVES}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      DB_HOST: ${DB_HOST:-file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com}
-      DB_PORT: ${DB_PORT:-1433}
-      DB_USER: ${DB_USER:-admin}
-      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env to your RDS master password}
-      DB_NAME: ${DB_NAME:-filebackup}
     user: "65532:65532"
     read_only: true
     tmpfs:

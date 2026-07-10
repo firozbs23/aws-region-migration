@@ -43,7 +43,7 @@ def ensure_database_exists() -> None:
     """RDS SQL Server has no auto-created app DB -- create it on first boot."""
     master = _make_engine("master", pool=False)
     try:
-        with master.begin() as conn:
+        with master.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             conn.execute(
                 text(
                     f"IF DB_ID(N'{settings.db_name}') IS NULL "

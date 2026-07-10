@@ -90,6 +90,8 @@ async def upload_file(
             status_code=413,
             detail=f"File exceeds max upload size of {settings.max_upload_size_mb} MB",
         )
+    except s3_client.S3AccessDeniedError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
     try:
         record = crud.create_file_record(
