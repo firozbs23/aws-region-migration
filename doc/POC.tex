@@ -466,7 +466,7 @@ classes, and functions rather than reprinting them.
 location exclusively through \texttt{app/config.py}'s \texttt{Settings}
 class} -- nothing else changes on a region migration. Key fields:
 \texttt{aws\_region}, \texttt{s3\_bucket\_documents}/\texttt{\_media}/\texttt{\_archives},
-\texttt{database\_url}; method \texttt{bucket\_for\_category(category)} maps
+\texttt{db\_host}, \texttt{db\_password}, \texttt{db\_name}; method \texttt{bucket\_for\_category(category)} maps
 an upload category to its bucket name.
 
 \subsection{S3 Client and CRUD}
@@ -540,8 +540,8 @@ confirmed by trying to exec one). No compiler needed in the builder:
 \subsection{docker-compose.yml}
 
 One service (full source in \texttt{docker-compose.yml}): \texttt{app} only.
-The database is AWS RDS SQL Server -- set \texttt{DATABASE\_URL} in
-\texttt{.env} to the RDS endpoint. \texttt{app} hardening: read-only rootfs
+The database is AWS RDS SQL Server -- set \texttt{DB\_PASSWORD} (and
+\texttt{DB\_HOST} on migration) in \texttt{.env}. \texttt{app} hardening: read-only rootfs
 (tmpfs for upload spooling), \texttt{cap\_drop: ALL},
 \texttt{no-new-privileges}, explicit non-root UID. Host port 80 $\to$
 container 8000.
@@ -549,8 +549,8 @@ container 8000.
 \subsection{Environment Templates}
 
 \texttt{.env.example} is the template for both direct app runs and
-\texttt{docker compose up}. Copy to \texttt{.env} and set
-\texttt{DATABASE\_URL} to your RDS endpoint. Compose reads \texttt{.env} for
+\texttt{docker compose up}. Copy to \texttt{.env} and set \texttt{DB\_PASSWORD}
+to your RDS master password. Compose reads \texttt{.env} for
 \texttt{\$\{VAR\}} substitution (not mounted into the container).
 
 \begin{warnbox}
@@ -589,7 +589,7 @@ Full request cycle through the hardened container & upload $\to$ correct bucket 
   \end{warnbox}
   \item \textbf{Create the database}: unlike MySQL/PostgreSQL on RDS, SQL Server has no "initial database name" option at creation time -- connect after the instance shows \texttt{Available} and create it yourself:
 \begin{lstlisting}[style=bashStyle]
-sqlcmd -S file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com -U admin -P 'devpassword' -C -N \
+sqlcmd -S file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com -U admin -P 'demo-password' -C -N \
     -Q "CREATE DATABASE filebackup;"
 \end{lstlisting}
   \item \textbf{S3}: create all three buckets in \texttt{ap-southeast-1} -- \texttt{myco-file-backup-documents-sg}, \texttt{-media-sg}, \texttt{-archives-sg} -- each S3 Standard, public access fully blocked (versioning left off; see Section~3.3).
@@ -618,8 +618,8 @@ git clone <your-repo-url> /opt/file-backup
 cd /opt/file-backup
 
 cp .env.example .env
-# Edit .env: set DATABASE_URL to your RDS endpoint, AWS_REGION, and the
-# three S3_BUCKET_* names for this region. Leave AWS_ACCESS_KEY_ID /
+# Edit .env: set DB_PASSWORD to your RDS master password, DB_HOST, AWS_REGION,
+# and the three S3_BUCKET_* names for this region. Leave AWS_ACCESS_KEY_ID /
 # AWS_SECRET_ACCESS_KEY blank -- the IAM instance role supplies credentials.
 
 docker compose up -d --build
@@ -641,7 +641,7 @@ restricted to 443.
 
 What changes on migration: \texttt{AWS\_REGION}, the three
 \texttt{S3\_BUCKET\_*} names (buckets don't move between regions),
-\texttt{DATABASE\_URL}, and the EC2 instance itself (new instance, same
+\texttt{DB\_HOST}/\texttt{DB\_PASSWORD}, and the EC2 instance itself (new instance, same
 image). Nothing else -- app code, schema, and IAM policy shape are identical.
 
 \subsection{Region Reference}
@@ -723,7 +723,9 @@ AWS_REGION=ap-southeast-2
 S3_BUCKET_DOCUMENTS=myco-file-backup-documents-sydney
 S3_BUCKET_MEDIA=myco-file-backup-media-sydney
 S3_BUCKET_ARCHIVES=myco-file-backup-archives-sydney
-DATABASE_URL=mssql+pymssql://admin:devpassword@file-backup-db-sydney.xxxxx.ap-southeast-2.rds.amazonaws.com:1433/filebackup
+DB_HOST=file-backup-db-sydney.xxxxx.ap-southeast-2.rds.amazonaws.com
+DB_PASSWORD=demo-password
+DB_NAME=filebackup
 \end{lstlisting}
   \item Start and confirm the cutover took effect:
 \begin{lstlisting}[style=bashStyle]

@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from urllib.parse import urlparse
 
 from fastapi import FastAPI
 
@@ -46,12 +45,11 @@ def health():
     summary="Show which AWS region/resources this instance is currently bound to",
 )
 def region_info():
-    db_host = urlparse(settings.database_url.replace("mssql+pymssql", "mssql")).hostname
     return RegionInfo(
         aws_region=settings.aws_region,
         s3_bucket_documents=settings.s3_bucket_documents,
         s3_bucket_media=settings.s3_bucket_media,
         s3_bucket_archives=settings.s3_bucket_archives,
-        database_host=db_host or "unknown",
+        database_host=settings.db_host,
         app_env=settings.app_env,
     )

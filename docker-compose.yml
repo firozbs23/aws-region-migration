@@ -1,7 +1,5 @@
-# Production / EC2: copy .env.example to .env, set DATABASE_URL to your RDS
-# endpoint, then `docker compose up`. Database is AWS RDS SQL Server only --
-# no bundled db container. `app` hardening: read-only rootfs (tmpfs for upload
-# spooling), all capabilities dropped, non-root UID.
+# Production / EC2: copy .env.example to .env, set DB_PASSWORD to your RDS
+# master password, then `docker compose up`. Database is AWS RDS SQL Server.
 
 services:
   app:
@@ -19,7 +17,11 @@ services:
       S3_BUCKET_ARCHIVES: ${S3_BUCKET_ARCHIVES}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env to your RDS endpoint}
+      DB_HOST: ${DB_HOST:-file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com}
+      DB_PORT: ${DB_PORT:-1433}
+      DB_USER: ${DB_USER:-admin}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env to your RDS master password}
+      DB_NAME: ${DB_NAME:-filebackup}
     user: "65532:65532"
     read_only: true
     tmpfs:

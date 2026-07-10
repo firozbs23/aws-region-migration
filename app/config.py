@@ -6,7 +6,9 @@ development). This is the ONLY file that needs to change when the stack is
 migrated from one AWS region to another.
 """
 from functools import lru_cache
+from urllib.parse import quote_plus
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,10 +33,14 @@ class Settings(BaseSettings):
     s3_bucket_media: str = "myco-file-backup-media-sg"
     s3_bucket_archives: str = "myco-file-backup-archives-sg"
 
-    database_url: str = (
-        "mssql+pymssql://admin:CHANGE_ME@"
-        "file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com:1433/filebackup"
-    )
+    # RDS SQL Server connection. Prefer DB_PASSWORD (no URL-encoding headaches).
+    # DATABASE_URL is still accepted as a full override when set.
+    db_host: str = "file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com"
+    db_port: int = 1433
+    db_user: str = "admin"
+    db_password: str = ""
+    db_name: str = "filebackup"
+    database_url: str | None = Field(default=None, validation_alias="DATABASE_URL")
     # ================================================================
 
     # ---- AWS credentials ----
@@ -51,6 +57,22 @@ class Settings(BaseSettings):
     # ---- DB connection pool ----
     db_pool_size: int = 5
     db_max_overflow: int = 5
+
+    @property
+    def resolved_database_url(self) -> str:
+        if self.database_url:
+            return self.database_url
+        if not self.db_password:
+            raise ValueError(
+                "DB_PASSWORD is not set. Add it to .env (RDS master password). "
+                "Or set DATABASE_URL to a full mssql+pymssql://... connection string."
+            )
+        user = quote_plus(self.db_user)
+        password = quote_plus(self.db_password)
+        return (
+            f"mssql+pymssql://{user}:{password}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
 
     def bucket_for_category(self, category: str) -> str:
         return {
