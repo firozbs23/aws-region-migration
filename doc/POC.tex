@@ -539,28 +539,19 @@ confirmed by trying to exec one). No compiler needed in the builder:
 
 \subsection{docker-compose.yml}
 
-Three services (full source in \texttt{docker-compose.yml}): \texttt{app},
-plus \texttt{db}/\texttt{db-init} standing in for RDS locally --
-production points \texttt{DATABASE\_URL} at real RDS instead. \texttt{app}
-hardening: read-only rootfs (tmpfs for upload spooling),
-\texttt{cap\_drop: ALL}, \texttt{no-new-privileges}, explicit non-root UID.
-Host port 80 $\to$ container 8000.
-
-\begin{tipbox}
-\texttt{db} can't go distroless (no such SQL Server image exists) but runs
-non-root by default. \texttt{cap\_drop: ALL} alone breaks it: \texttt{sqlservr}
-has \texttt{cap\_net\_bind\_service} as a \emph{file} capability, which the
-kernel won't grant at exec unless it's in the caller's bounding set --
-fixed by adding back just \texttt{NET\_BIND\_SERVICE}.
-\end{tipbox}
+One service (full source in \texttt{docker-compose.yml}): \texttt{app} only.
+The database is AWS RDS SQL Server -- set \texttt{DATABASE\_URL} in
+\texttt{.env} to the RDS endpoint. \texttt{app} hardening: read-only rootfs
+(tmpfs for upload spooling), \texttt{cap\_drop: ALL},
+\texttt{no-new-privileges}, explicit non-root UID. Host port 80 $\to$
+container 8000.
 
 \subsection{Environment Templates}
 
-\texttt{.env.example} is for running the app directly; \texttt{.env.docker.example}
-is what \texttt{docker compose up} reads for \texttt{\$\{VAR\}} substitution
-(not mounted into the container; \texttt{DATABASE\_URL} is assembled from
-\texttt{MSSQL\_*} + the \texttt{db} service name). Both templates are in
-the repository root.
+\texttt{.env.example} is the template for both direct app runs and
+\texttt{docker compose up}. Copy to \texttt{.env} and set
+\texttt{DATABASE\_URL} to your RDS endpoint. Compose reads \texttt{.env} for
+\texttt{\$\{VAR\}} substitution (not mounted into the container).
 
 \begin{warnbox}
 Docker Compose prefers shell-exported env vars over \texttt{.env}, per-variable
@@ -626,16 +617,13 @@ docker compose version
 git clone <your-repo-url> /opt/file-backup
 cd /opt/file-backup
 
-cp .env.docker.example .env
-# Edit .env: set AWS_REGION and the three S3_BUCKET_* names for this region.
-# Leave AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY blank -- the IAM instance
-# role supplies credentials automatically. Set MSSQL_SA_PASSWORD to a
-# strong value if running the bundled db container; if pointing at real
-# RDS instead, skip the db/db-init services (docker compose up app) and
-# set DATABASE_URL directly as an override.
+cp .env.example .env
+# Edit .env: set DATABASE_URL to your RDS endpoint, AWS_REGION, and the
+# three S3_BUCKET_* names for this region. Leave AWS_ACCESS_KEY_ID /
+# AWS_SECRET_ACCESS_KEY blank -- the IAM instance role supplies credentials.
 
 docker compose up -d --build
-docker compose ps          # app, db, db-init all healthy/exited-0
+docker compose ps          # app healthy
 curl http://localhost/health
 # Swagger UI: http://<ec2-public-ip>/docs
 \end{lstlisting}
@@ -645,15 +633,6 @@ Port 80 $\to$ container 8000, Swagger reachable with no reverse-proxy step.
 Before real usage: TLS termination (Nginx/ALB) in front, \texttt{dev-web-access-sg}
 restricted to 443.
 \end{tipbox}
-
-\subsection{Pointing at Real RDS Instead of the Bundled \texttt{db} Container}
-Once RDS exists, set \texttt{DATABASE\_URL} in \texttt{.env} and bring up
-only \texttt{app} with \texttt{--no-deps} (otherwise Compose still starts
-\texttt{db}/\texttt{db-init} first, per their \texttt{depends\_on}):
-\begin{lstlisting}[style=bashStyle]
-echo 'DATABASE_URL=mssql+pymssql://admin:devpassword@file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com:1433/filebackup' >> .env
-docker compose up -d --build --no-deps app
-\end{lstlisting}
 
 % =======================================================================
 \section[Region Migration Runbook]{\texorpdfstring{Region Migration Runbook: Singapore $\to$ Sydney}{Region Migration Runbook: Singapore to Sydney}}
@@ -748,7 +727,7 @@ DATABASE_URL=mssql+pymssql://admin:devpassword@file-backup-db-sydney.xxxxx.ap-so
 \end{lstlisting}
   \item Start and confirm the cutover took effect:
 \begin{lstlisting}[style=bashStyle]
-docker compose up -d --build --no-deps app
+docker compose up -d --build
 curl http://<new-ec2-ip>/api/v1/region-info
 \end{lstlisting}
 \end{enumerate}

@@ -31,7 +31,10 @@ class Settings(BaseSettings):
     s3_bucket_media: str = "myco-file-backup-media-sg"
     s3_bucket_archives: str = "myco-file-backup-archives-sg"
 
-    database_url: str = "mssql+pymssql://sa:CHANGE_ME@localhost:1433/filebackup"
+    database_url: str = (
+        "mssql+pymssql://admin:CHANGE_ME@"
+        "file-backup-db.c9g4u6ekudby.ap-southeast-1.rds.amazonaws.com:1433/filebackup"
+    )
     # ================================================================
 
     # ---- AWS credentials ----
