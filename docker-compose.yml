@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     image: file-backup-service:latest
     ports:
-      - "80:8000"   # host:80 (public) -> container:8000 (unprivileged, non-root)
+      - "8000:8000"
     environment:
       APP_ENV: ${APP_ENV:-poc}
       AWS_REGION: ${AWS_REGION:-ap-southeast-1}
